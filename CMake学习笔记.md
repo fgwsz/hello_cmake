@@ -82,12 +82,12 @@ cmake_minimums_required(VERSION 3.0)
 ### 设置项目的名字
 使用`project`来设置项目的名字,具体的语法如下:
 ```cmake
-project(<PROJECT NAME> [LANGUAGE <language name>...])
+project(<PROJECT NAME> [LANGUAGES <language name>...])
 project(<PROJECT NAME> #项目的名字
     [VERSION <major>[.<minor>[.<patch>[.<tweak>]]] #项目的版本
     [DESCRIPTION <project description string>] #项目的简要说明
     [HOMEPAGE_URL <url string>] #项目网址主页地址
-    [LANGUAGE <language name>...]) #项目使用的一种或多种语言
+    [LANGUAGES <language name>...]) #项目使用的一种或多种语言
 ```
 ### 设置可执行程序的名字及其依赖
 使用`add_executable`来定义工程生成一个可执行程序.
