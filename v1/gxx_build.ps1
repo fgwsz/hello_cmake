@@ -1,2 +1,2 @@
 g++ ./*.cpp -o app
-./app
+./app.exe

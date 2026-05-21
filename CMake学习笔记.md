@@ -77,7 +77,7 @@ CMake suite maintained and supported by Kitware (kitware.com/cmake).
 ```cmake
 cmake_minimums_required(VERSION 3.0)
 ```
-注意:`cmake_minimums_required`的第一个参数是`VERSION`宏,
+注意:`cmake_minimums_required`的第一个参数是`VERSION`宏(`CMake`内建变量),
 一定不要忘记写.
 ### 设置项目的名字
 使用`project`来设置项目的名字,具体的语法如下:
@@ -170,3 +170,157 @@ cmake_install.cmake
 是否需要把所有的源文件路径都放到`add_executable`命令的第二个参数?
 
 有没有更简洁的做法?
+
+首先需要使用一个变量来指代一系列的源文件名称列表,
+其次要使用文件搜索匹配功能将搜索到的源文件路径直接导出到这个变量里面.
+
+`CMake`提供了`set`来设置一个变量的值.具体的语法如下:
+```cmake
+set(<variable name> [<argument value>...] [CHANGE TYPE DOCSTRING [FORCE]])
+```
+注意:`set`赋值,无论是赋值什么样的数据,即便是直接赋值一个整数,
+也会被识别成字符串`string`类型,给一个变量赋值为多个值的列表,
+每个元素之间可以使用空格` `或者分号`;`隔开.
+
+如何取得变量的值呢?使用`${variable name}`语法取值.
+```cmake
+#Number="123"
+set(Number 123)
+#方式一:使用空格分隔开每个元素
+set(SRC_LIST add.cpp sub.cpp mult.cpp div.cpp main.cpp)
+#方式一:使用分号分隔开每个元素
+set(SRC_LIST add.cpp;sub.cpp;mult.cpp;div.cpp;main.cpp)
+#取得变量`SRC_LIST`的值传入`add_executable()`第二个参数
+add_executable(app ${SRC_LIST})
+```
+### 指定使用的`C++`语言标准
+作为`set`的一个典型使用案例,
+我们可以修改`CMake`的内建变量`CMAKE_CXX_STANDARD`的值,
+来指定当前项目所使用的`C++`语言标准.
+```cmake
+#使用C++20
+set(CMAKE_CXX_STANDARD 20)
+```
+除此之外还有另外的方式:
+
+在使用`cmake`命令配置`CMakeLists.txt`文件路径的时候,
+可以使用`-D`指定内建变量的值,`-D`后面加不加空格都可以.
+```bash
+cmake <CMakeLists.txt dir path> -D<variable name>=<variable value>
+cmake <CMakeLists.txt dir path> -D <variable name>=<variable value>
+```
+因此,可以用`-D`来指定`CMAKE_CXX_STANDARD`的值.
+
+一个具体的使用例子:
+```cmake
+cmake <CMakeLists.txt文件路径> -DCMAKE_CXX_STANDARD=20
+cmake <CMakeLists.txt文件路径> -D CMAKE_CXX_STANDARD=20
+```
+### 指定输出的路径
+可以通过设置`EXECUTABLE_OUTPUT_PATH`的值,来指定项目可执行程序的生成目录路径.
+而且这个目录路径如果不存在的话,`CMake`会自动创建这个目录.
+
+因为动态库有可执行权限,因此也可以使用`EXECUTABLE_OUTPUT_PATH`来指定生成路径.
+```cmake
+set(HOME /home/fgwsz)
+set(EXECUTABLE_OUTPUT_PATH ${HOME}/bin)
+```
+此外,可以通过设置`LIBRARY_OUTPUT_PATH`的值,指定项目库文件的生成路径.
+```cmake
+set(HOME /home/fgwsz)
+set(LIBRARY_OUTPUT_PATH ${HOME}/lib)
+```
+## 3.`CMake`中`set`的使用(下)
+将`v1`项目拷贝一份,命名为`v2`.
+
+结合前面所学习的知识重新撰写`CMakeLists.txt`.
+```cmake
+cmake_minimum_required(VERSION 3.15)
+get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+project(${PROJECT_NAME} LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
+set(SRC add.cpp sub.cpp mult.cpp div.cpp main.cpp)
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build)
+add_executable(${PROJECT_NAME} ${SRC})
+```
+根据这个 CMakeLists.txt,构建项目使用的命令是:
+```bash
+cmake -B build
+cmake --build build
+```
+为什么是这些命令?
+为什么不直接在项目目录运行`cmake .`?
+
+1. **`cmake -B build`** - 配置项目
+   - `-B build` 指定构建目录为`build`文件夹,如果不存在会自动创建
+   - CMake 会读取当前目录的`CMakeLists.txt`,
+在`build`目录下生成构建系统文件(如`Makefile`)
+   - 虽然代码中设置了`EXECUTABLE_OUTPUT_PATH`,
+但这只影响最终可执行文件的位置,不影响中间构建文件
+
+2. **`cmake --build build`** - 执行构建
+   - 自动检测`build`目录中的构建系统
+   - 编译源代码并链接成可执行文件
+   - 根据`EXECUTABLE_OUTPUT_PATH`设置,最终可执行文件会输出到`build/`目录
+
+这里简要介绍一下`cmake -B`.
+### `cmake -B`
+`cmake -B`是`CMake 3.13`版本引入的一个非常有用的命令行选项,
+它用来**指定构建目录(`Build Directory`)**.
+
+命令格式
+```bash
+cmake -B <构建目录路径> [其他选项]
+```
+作用和解释
+1. **`-B`**:代表 **Build**(构建目录).  
+2. **`<构建目录路径>`**:你希望 CMake 生成所有构建中间文件(如 `CMakeCache.txt`|`CMakeFiles` 文件夹|`Makefile` 或 `.sln` 解决方案)的位置.
+传统写法 vs `-B` 写法
+
+| 传统写法(CMake 3.13 之前) | 现代推荐写法(CMake 3.13+) |
+| :--- | :--- |
+| `mkdir build` <br> `cd build` <br> `cmake ..` | `cmake -B build .` |
+| `mkdir ../mybuild` <br> `cd ../mybuild` <br> `cmake ../src` | `cmake -B mybuild -S src` |
+
+完整使用示例
+```bash
+# 在项目根目录执行
+# -B build    : 在 build 目录下生成构建系统
+# -S .        : 指定源代码目录为当前目录(可以省略,默认就是当前目录)
+# -DCMAKE_BUILD_TYPE=Release : 设置构建类型为 Release
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+```
+执行后,你的目录结构会变成:
+```
+项目根目录/
+├── CMakeLists.txt
+├── build/          ← 新建的目录
+│   ├── CMakeCache.txt
+│   ├── CMakeFiles/
+│   ├── Makefile    (或 .sln 文件)
+│   └── ...
+└── src/...
+```
+优点
+- **无需手动 `mkdir` 和 `cd`**:一条命令直接配置到独立目录,保持源代码目录干净.
+- **便于管理多个构建**:可以轻松维护多个构建目录,如 `build/debug`|`build/release`.
+- **配合 `--build` 使用**:
+  ```bash
+  cmake -B build                # 配置
+  cmake --build build           # 编译
+  ```
+配套选项
+| 选项 | 作用 | 示例 |
+| :--- | :--- | :--- |
+| `-B <path>` | 指定构建目录 | `cmake -B build` |
+| `-S <path>` | 指定源代码目录 | `cmake -S . -B build` |
+| `--build` | 构建已配置的项目 | `cmake --build build` |
+| `--install` | 安装构建产物 | `cmake --install build --prefix /usr/local` |
+
+总结
+
+**`cmake -B build`** = **"在当前目录下执行`CMake`配置,
+并将所有生成的文件放到`build`文件夹中"**.
+
+这是现代`CMake`推荐的外源构建(`out-of-source build`)方式,
+让源代码目录保持整洁.

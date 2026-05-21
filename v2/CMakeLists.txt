@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.15)
+get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+project(${PROJECT_NAME} LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
+set(SRC add.cpp sub.cpp mult.cpp div.cpp main.cpp)
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build)
+add_executable(${PROJECT_NAME} ${SRC})
