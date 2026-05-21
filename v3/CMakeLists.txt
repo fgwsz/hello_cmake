@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.15)
+get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+project(${PROJECT_NAME} LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
+#aux_source_directory(${PROJECT_SOURCE_DIR} SRC_LIST)
+file(GLOB SRC_LIST "${PROJECT_SOURCE_DIR}/*.cpp")
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build)
+add_executable(${PROJECT_NAME} ${SRC_LIST})

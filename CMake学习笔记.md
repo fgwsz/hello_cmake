@@ -113,6 +113,9 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME} LANGUAGES CXX)
 add_executable(${PROJECT_NAME}  add.cpp sub.cpp mult.cpp div.cpp main.cpp)
 ```
+其中`CMAKE_CURRENT_SOURCE_DIR`是`CMake`内建变量,
+它的默认值为命令`cmake`为项目指定的`CMakeLists.txt`所在的目录路径.
+
 至于,为什么是这样,等到后面的课程就知道怎么回事了.
 ### `v1`项目的构建
 `cmake`命令的用法:
@@ -230,7 +233,7 @@ set(EXECUTABLE_OUTPUT_PATH ${HOME}/bin)
 set(HOME /home/fgwsz)
 set(LIBRARY_OUTPUT_PATH ${HOME}/lib)
 ```
-## 3.`CMake`中`set`的使用(下)
+## 4.`CMake`中`set`的使用(下)
 将`v1`项目拷贝一份,命名为`v2`.
 
 结合前面所学习的知识重新撰写`CMakeLists.txt`.
@@ -324,3 +327,65 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release
 
 这是现代`CMake`推荐的外源构建(`out-of-source build`)方式,
 让源代码目录保持整洁.
+## 5.搜索文件
+前面我们撰写`CMakeLists.txt`的时候每次都是要书写所有的源文件的路径,
+这始终是低效的,有没有一种更好的方式不用所有源文件的路径呢?
+
+`CMake`提供了2种方式来解决这个问题:
+### 方式一:`aux_source_directory()`
+搜索匹配`<source dir path>`路径下的全部源文件,
+赋值给名为`<variable name>`的变量.
+```cmake
+aux_source_directory(<source dir path> <variable name>)
+```
+参考案例:
+```cmake
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src SRC_LIST)
+add_executable(app ${SRC_LIST})
+```
+### 方式二:`file()`
+搜索/递归搜索匹配`<source dir path>`路径下的指定文件类型的文件,
+赋值给名为`<variable name>`的变量.
+```cmake
+file(<GLOB|GLOB_RECURSE> <variable name> <file match express>)
+```
+`GLOB`:表示匹配目录下的所有文件.
+
+`GLOB_RECURSE`:表示匹配目录下以及递归匹配子目录中的所有文件.
+
+`<file match express>`是要搜索的文件路径和文件类型.
+
+其中`<file match express>`表达式可以用使用`""`括起来,也可以不用.
+
+一个具体的案例如下:
+```cmake
+file(GLOB SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
+file(GLOB SRC_LIST "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+```
+上面的`*`是通配符,`*.cpp`表示所有后缀名为`.cpp`的文件.
+
+下面介绍除了`CMAKE_CURRENT_SOURCE_DIR`之外的
+另外一个常用的内建变量`PROJECT_SOURCE_DIR`.
+
+`PROJECT_SOURCE_DIR`的默认值是项目所在根目录的路径.
+```cmake
+file(GLOB SRC_LIST ${PROJECT_SOURCE_DIR}/src/*.cpp)
+file(GLOB SRC_LIST "${PROJECT_SOURCE_DIR}/src/*.cpp")
+```
+下面我们复制`v2`项目,重新建立一个`v3`项目.
+
+下面是优化之后的`v3`项目的`CMakeLists.txt`.
+```cmake
+cmake_minimum_required(VERSION 3.15)
+get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+project(${PROJECT_NAME} LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
+
+#方式一
+#aux_source_directory(${PROJECT_SOURCE_DIR} SRC_LIST)
+#方式二
+file(GLOB SRC_LIST "${PROJECT_SOURCE_DIR}/*.cpp")
+
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build)
+add_executable(${PROJECT_NAME} ${SRC_LIST})
+```
