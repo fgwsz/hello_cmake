@@ -389,3 +389,44 @@ file(GLOB SRC_LIST "${PROJECT_SOURCE_DIR}/*.cpp")
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build)
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 ```
+## 6.指定头文件路径
+使用`include_directories`命令进行头文件包含.
+```cmake
+include_directories(<head file path>...)
+```
+这个命令的目的:
+
+只要指定了`head.h`所在的目录路径,
+就可以直接在任意文件中使用`#include"head.h"`来引用`head.h`的内容.
+
+不需要再使用繁琐的语法:
+
+`#include"<head.h file path>"`来引用`head.h`的内容.
+其中`<head.h file path>`是`head.h`的绝对路径
+或者是`head.h`相对于撰写`#include`语句的文件的相对路路径.
+
+接下来,我们复制`v3`为`v4`.
+并组织为如下的项目结构:
+```
+v4/
+│ include/
+│ │ head.h
+│ src/
+│ │ add.cpp
+│ │ div.cpp
+│ │ main.cpp
+│ │ mult.cpp
+│ │ sub.cpp
+│ CMakeLists.txt
+```
+`CMakeLists.txt`的文件内容如下:
+```cmake
+cmake_minimum_required(VERSION 3.15)
+get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+project(${PROJECT_NAME} LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
+include_directories(${PROJECT_SOURCE_DIR}/include)
+file(GLOB SRC_LIST "${PROJECT_SOURCE_DIR}/src/*.cpp")
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build)
+add_executable(${PROJECT_NAME} ${SRC_LIST})
+```
